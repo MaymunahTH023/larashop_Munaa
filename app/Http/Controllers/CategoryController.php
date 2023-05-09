@@ -12,12 +12,17 @@ class CategoryController extends Controller
     public function __construct(){
       $this->middleware(function($request, $next){
 
-          if(Gate::allows('manage-categories')) return $next($request);
-            return $user->username = "Maymunah Tri Herlina"
-      }else{
-          abort(403, 'Anda tidak memiliki cukup hak akses');
-        });
+        if(Gate::allows('manage-categories')) return $next($request);
+      
+        abort(403, 'Anda tidak memiliki cukup hak akses');
+      });
     }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function index(Request $request){
         $categories = \App\Models\Category::paginate(10);
     
@@ -75,7 +80,6 @@ class CategoryController extends Controller
 
     return redirect()->route('categories.create')->with('status', 'Category successfully created');
 }
-
     /**
      * Display the specified resource.
      *
@@ -110,41 +114,42 @@ class CategoryController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function update (Request $request, $id){
-        $name = $request->get('name');
-        $slug = $request->get('slug');
-    
-        $category = \App\Models\Category::findOrFail($id);
 
-        \Validator::make($request->all(), [
-          "name" => "required|min:3|max:20",
-          "image" => "required",
-          "slug" => [
-            "required",
-            Rule::unique("categories")->ignore($category->slug, "slug")
-          ]
-        ])->validate();
-    
-        $category->name = $name;
-        $category->slug = $slug;
-    
-        if($request->file('image')){
-            if($category->image && file_exists(storage_path('app/public/' . $category->image))){
-                \Storage::delete('public/' . $category->name);
-            }
-    
-            $new_image = $request->file('image')->store('category_images', 'public');
-    
-            $category->image = $new_image;
-        }
-    
-        $category->updated_by = \Auth::user()->id;
-    
-        $category->slug = \Str::slug($name);
-    
-        $category->save();
-    
-        return redirect()->route('categories.edit', [$id])->with('status', 'Category successfully updated');
-    }
+      $category = \App\Models\Category::findOrFail($id);
+  
+      \Validator::make($request->all(), [
+        "name" => "required|min:3|max:20",
+        "image" => "required",
+        "slug" => [
+          "required",
+          Rule::unique("categories")->ignore($category->slug, "slug")
+        ]
+      ])->validate();
+  
+      $name = $request->get('name');
+      $slug = $request->get('slug');
+  
+      $category->name = $name;
+      $category->slug = $slug;
+  
+      if($request->file('image')){
+          if($category->image && file_exists(storage_path('app/public/' . $category->image))){
+              \Storage::delete('public/' . $category->name);
+          }
+  
+          $new_image = $request->file('image')->store('category_images', 'public');
+  
+          $category->image = $new_image;
+      }
+  
+      $category->updated_by = \Auth::user()->id;
+  
+      $category->slug = \Str::slug($name);
+  
+      $category->save();
+  
+      return redirect()->route('categories.edit', [$id])->with('status', 'Category successfully updated');
+  }
 
     /**
      * Remove the specified resource from storage.
